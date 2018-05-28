@@ -25,7 +25,7 @@ class DarkSkyClient:
         return DSFCurrent(self.raw_data)
 
     def get_daily(self):
-        return DSFDaily(self.raw_data)
+        return DSFDaily(self.raw_data['daily'])
 
     def get_hourly(self):
-        return DSFHourly(self.raw_data)
+        return DSFHourly(self.raw_data['hourly'])
