@@ -53,3 +53,42 @@ for item in hourly.data:
     print(f"Probability of rain: {item['precipProbability']}")
     print(f"Amount of rain (mm/h): {item['precipIntensity']}")
 ```
+
+#### Retrieving a list of value pair tuples containing the maximum temperature for each day.
+The first item in the tuple represents the day and the second item represents the value
+```python
+max_temps = daily.get_data('temperatureHigh')
+
+Out[]:
+[('28-05-2018 00:00', 29.62),
+ ('29-05-2018 00:00', 26.08),
+ ('30-05-2018 00:00', 27.66),
+ ('31-05-2018 00:00', 26.66),
+ ('01-06-2018 00:00', 27.04),
+ ('02-06-2018 00:00', 28.22),
+ ('03-06-2018 00:00', 29.34),
+ ('04-06-2018 00:00', 29.01)]
+```
+If you want to use a different datetime format you can pass your own format using the date_fmt parameter
+```python
+max_temps = daily.get_data('temperatureHigh', date_fmt="%A")  
+
+Out[]:
+[('Monday', 29.62),
+ ('Tuesday', 26.08),
+ ('Wednesday', 27.66),
+ ('Thursday', 26.66),
+ ('Friday', 27.04),
+ ('Saturday', 28.22),
+ ('Sunday', 29.34),
+ ('Monday', 29.01)]
+```
+You can make the data friendlier to use in graphs by settings the graph paramter to True
+```python
+max_temps = daily.get_data('temperatureHigh', graph=True)
+
+Out[]:
+{'x': ['28-05-2018 00:00', '29-05-2018 00:00', '30-05-2018 00:00', '31-05-2018 00:00', '01-06-2018 00:00', '02-06-2018 00:00', '03-06-2018 00:00', '04-06-2018 00:00'],
+ 'y': [29.62, 26.08, 27.66, 26.66, 27.04, 28.22, 29.34, 29.01]}
+```
+This method is also available on the daily object.
