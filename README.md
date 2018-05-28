@@ -57,7 +57,7 @@ for item in hourly.data:
 #### Retrieving a list of value pair tuples containing the maximum temperature for each day.
 The first item in the tuple represents the day and the second item represents the value
 ```python
-max_temps = daily.get_data('temperatureHigh')
+max_temps = daily.data_pair('temperatureHigh')
 
 Out[]:
 [('28-05-2018 00:00', 29.62),
@@ -71,7 +71,7 @@ Out[]:
 ```
 If you want to use a different datetime format you can pass your own format using the date_fmt parameter
 ```python
-max_temps = daily.get_data('temperatureHigh', date_fmt="%A")  
+max_temps = daily.data_pair('temperatureHigh', date_fmt="%A")  
 
 Out[]:
 [('Monday', 29.62),
@@ -85,7 +85,7 @@ Out[]:
 ```
 You can make the data friendlier to use in graphs by settings the graph paramter to True
 ```python
-max_temps = daily.get_data('temperatureHigh', graph=True)
+max_temps = daily.data_pair('temperatureHigh', graph=True)
 
 Out[]:
 {'x': ['28-05-2018 00:00', '29-05-2018 00:00', '30-05-2018 00:00', '31-05-2018 00:00', '01-06-2018 00:00', '02-06-2018 00:00', '03-06-2018 00:00', '04-06-2018 00:00'],
