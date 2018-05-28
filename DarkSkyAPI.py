@@ -4,16 +4,17 @@ from DSForecast import DSFCurrent, DSFDaily, DSFHourly
 
 class DarkSkyClient:
 
-    base_url = "https://api.darksky.net/forecast/{}/{},{}?units=si"
+    base_url = "https://api.darksky.net/forecast/{}/{},{}?units={}"
 
-    def __init__(self, api_key, lat, lon):
+    def __init__(self, api_key:str, lat:float, lon:float, units:str="si"):
         self.api_key = api_key
         self.latitude = lat
         self.longitude = lon
+        self.units = units
         self.raw_data = self._get_response()
 
     def _url_builder(self):
-        url = self.base_url.format(self.api_key, self.latitude, self.longitude)
+        url = self.base_url.format(self.api_key, self.latitude, self.longitude, self.units)
         return url
 
     def _get_response(self):
@@ -22,7 +23,7 @@ class DarkSkyClient:
         return raw_response
 
     def get_current(self):
-        return DSFCurrent(self.raw_data)
+        return DSFCurrent(self.raw_data['currently'])
 
     def get_daily(self):
         return DSFDaily(self.raw_data['daily'])
