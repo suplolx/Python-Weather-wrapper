@@ -5,6 +5,7 @@ from DSForecast import DSFCurrent, DSFDaily, DSFHourly
 class DarkSkyClient:
 
     base_url = "https://api.darksky.net/forecast/{}/{},{}?units={}"
+    API_calls_remaining = 1000
 
     def __init__(self, api_key:str, lat:float, lon:float, units:str="si"):
         self.api_key = api_key
@@ -19,9 +20,9 @@ class DarkSkyClient:
         return url
 
     def _get_response(self):
-        r = requests.get(self._url_builder())
-        raw_response = r.json()
-        return raw_response
+        raw_response = requests.get(self._url_builder())
+        self.API_calls_remaining -= int(raw_response.headers['X-Forecast-API-Calls'])
+        return raw_response.json()
 
     def get_current(self):
         return DSFCurrent(self.raw_data['currently'])
