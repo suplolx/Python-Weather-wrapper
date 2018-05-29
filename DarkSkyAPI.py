@@ -12,6 +12,7 @@ class DarkSkyClient:
         self.longitude = lon
         self.units = units
         self.raw_data = self._get_response()
+        self.timezone = self.raw_data['timezone']
 
     def _url_builder(self):
         url = self.base_url.format(self.api_key, self.latitude, self.longitude, self.units)

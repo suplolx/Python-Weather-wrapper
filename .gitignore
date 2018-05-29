@@ -3,3 +3,5 @@ __pycache__
 hourly_graph.py
 main.pyw
 secret.py
+.vscode
+.ipynb_checkpoints
