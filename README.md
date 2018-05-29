@@ -1,8 +1,8 @@
 # DarkSkyAPI wrapper
-The DarkSkyAPI weather wrapper is powered by DarkSky and provides an easy way to access weather details using Python 3.6.
+The DarkSkyAPI weather wrapper is [powered by DarkSky](https://darksky.net/poweredby/) and provides an easy way to access weather details using Python 3.6.
 
 ## Client instance
-First import the DarkSkyClient class from the DarkSkyAPI module. If you don't have an API key for the DarkSkyAPI yet, get one for free here. This will allow you to make a 1000 calls each day.
+First import the DarkSkyClient class from the DarkSkyAPI module. If you don't have an API key for the DarkSkyAPI yet, get one for free [here](https://darksky.net/dev/register). This will allow you to make a 1000 calls each day.
 
 ```python
 from DarkSkyAPI import DarkSkyClient
