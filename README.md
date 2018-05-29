@@ -1,94 +1,100 @@
-# Python-Weather-wrapper
-API wrapper for DarkSkyAPI written in Python 3.6.5. Powered by https://darksky.net/poweredby/
+# DarkSkyAPI wrapper
+The DarkSkyAPI weather wrapper is powered by DarkSky and provides an easy way to access weather details using Python 3.6.
 
-### Usage examples
+## Client instance
+First import the DarkSkyClient class from the DarkSkyAPI module. If you don't have an API key for the DarkSkyAPI yet, get one for free here. This will allow you to make a 1000 calls each day.
 
-#### Creating the client instance.
 ```python
 from DarkSkyAPI import DarkSkyClient
-
-api_key = YOUR_API_KEY
-
-client = DarkSkyClient(api_key, lat=37.423021, lon=-122.083739)
 ```
+Next, create the client instance using the api_key as the first argument and the latitude-longitude of the location as the second and third argument. The fourth argument is optional and will set the units (Celsius/Fahrenheit). The unit options are as follows:
 
-#### Getting current weather details
-All weather details are available like attributes using dot notation.
+* auto: automatically select units based on geographic location
+* ca: same as si, except that windSpeed and windGust are in kilometers per hour
+* uk2: same as si, except that nearestStormDistance and visibility are in miles, and windSpeed and windGust in miles per hour.
+* us: Imperial units
+* si: International System of Units (default)
+If no units are provided it will default to "si". Both lat and lon can either be floats or strings.
 ```python
-# Creating current instance
+client = DarkSkyClient(api_key, lat, lon, units="si")
+```
+The client instance already holds the raw weather response and can be accessed by client.raw_data.
+```python
+client.raw_data
+```
+Additionally, it also holds the timezone.
+```python
+client.timezone
+```
+## Current instance
+To create the current instance, simply call the get_current method on client.
+
+```python
 current = client.get_current()
+```
+All the data points of the current weather details are automatically set as attributes of the instance. This allows you to use the datapoints like attributes.
 
-print(f"Current temperature: {current.temperature}")
-print(f"Feels like: {current.apparentTemperature}")
+```python
+current.temperature
+```
+The weekday can be accessed by calling the weekday method on the current instance. This will return the full weekday name (in English). To return the short weekday name (i.e Mon, Tue), set the short parameter to True.
+```python
+current.weekday()
+current.weekday(short=True)
 ```
 
-#### Getting daily forecast details for next 7 days
-Daily weather details are both available using the day_n attribute followed by the datapoint and by using the raw data object for looping.
+## Daily and hourly instance
+To create the daily and hourly instance, simply call the get_daily and get_hourly method on client.
+
 ```python
-# Creating daily forecast instance
 daily = client.get_daily()
-
-# Individual 
-print(f"Max temperature today: {daily.day_0['temperatureHigh']}")
-print(f"Max temperature today: {daily.day_0['temperatureLow']}")
-
-# Raw data
-for item in daily.data:
-    print(f"Max temperature: {item['temperatureHigh']}")
-    print(f"Min temperature: {item['temperatureLow']}")
-```
-
-#### Getting hourly forecast details for next 48 hours
-Hourly weather details are both available using the hour_n attribute followed by the datapoint and by using the raw data object for looping.
-```python
-# Creating hourly instance
 hourly = client.get_hourly()
-
-# Individual 
-print(f"Probability of rain: {hourly.hour_0['precipProbability']}")
-print(f"Amount of rain (mm/h): {hourly.hour_0['precipIntensity']}")
-
-# Raw data
-for item in hourly.data:
-    print(f"Probability of rain: {item['precipProbability']}")
-    print(f"Amount of rain (mm/h): {item['precipIntensity']}")
 ```
+The daily and hourly classes behave in the same way because they inherit from the same base class. Because of this, only the daily instance is documented. The terms hourly/daily and hour/day can be used interchangeably.
 
-#### Retrieving a list of value pair tuples containing the maximum temperature for each day.
-The first item in the tuple represents the day and the second item represents the value
+The forecast datapoints can be accessed in various ways. To get the data by individual days or hours you can either use the day/hour_n attribute or the data list of the forecast instance.
+
 ```python
-max_temps = daily.data_pair('temperatureHigh')
+# Day attribute
+daily.day_0['temperatureHigh']
 
-Out[]:
-[('28-05-2018 00:00', 29.62),
- ('29-05-2018 00:00', 26.08),
- ('30-05-2018 00:00', 27.66),
- ('31-05-2018 00:00', 26.66),
- ('01-06-2018 00:00', 27.04),
- ('02-06-2018 00:00', 28.22),
- ('03-06-2018 00:00', 29.34),
- ('04-06-2018 00:00', 29.01)]
+# Daily data list
+daily.data[0]['temperatureHigh']
 ```
-If you want to use a different datetime format you can pass your own format using the date_fmt parameter
+Alternatively, there are several methods you can use to get data collections of one or more datapoints. These methods work on both the daily and hourly instance. The methods currently available are:
+
+* data_pair(datapoint, date_fmt, graph): Will return a list of value pair tuples containing firstly the datetime and secondly the value of the datapoint. This method accepts three arguments. The first argument is the datapoint (required). The second argument is the date_fmt parameter and will set the format of the datetime value (default - "%d-%m-%Y %H:%M"). The third argument is the graph argument, if set to True it wil return a graph-friendly dict of the datetime and values of the datapoint (default - False).
+* data_single(datapoint): Will return a list of single data values. This method accepts one method which is the datapoint.
+* data_combined(datalist): Will return a dict containing lists of datapoint values for each day/hour. This method accepts one argument which is the list of datapoints you want to retrieve. If you don't provide an argument it will return all datapoints.
+* datetimes(date_fmt): Will return a list containing all the datetimes of the days/hours. This method accepts one argument which is the dateformat (default - "%d-%m-%Y %H:%M")
+### Data pair method
 ```python
-max_temps = daily.data_pair('temperatureHigh', date_fmt="%A")  
+# Data pair default date format and no graph
+daily.data_pair('temperatureHigh')
 
-Out[]:
-[('Monday', 29.62),
- ('Tuesday', 26.08),
- ('Wednesday', 27.66),
- ('Thursday', 26.66),
- ('Friday', 27.04),
- ('Saturday', 28.22),
- ('Sunday', 29.34),
- ('Monday', 29.01)]
+# Data pair weekday names date_fmt
+daily.data_pair('temperatureHigh', date_fmt="%A")
+
+# Data pair graph
+daily.data_pair('temperatureHigh', graph=True)
 ```
-You can make the data friendlier to use in graphs by settings the graph paramter to True
+### Data single method
 ```python
-max_temps = daily.data_pair('temperatureHigh', graph=True)
-
-Out[]:
-{'x': ['28-05-2018 00:00', '29-05-2018 00:00', '30-05-2018 00:00', '31-05-2018 00:00', '01-06-2018 00:00', '02-06-2018 00:00', '03-06-2018 00:00', '04-06-2018 00:00'],
- 'y': [29.62, 26.08, 27.66, 26.66, 27.04, 28.22, 29.34, 29.01]}
+daily.data_single('temperatureHigh')
 ```
-This method is also available on the daily object.
+### Data combined method
+```python
+# Specified list of datapoints
+daily.data_combined(['temperatureHigh', 'temperatureLow'])
+
+# All data points
+daily.data_combined()
+```
+### Datetimes method
+```python
+# Default date format
+daily.datetimes()
+
+# Weekday names date format (short)
+daily.datetimes(date_fmt="%a")
+```
