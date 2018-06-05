@@ -34,7 +34,7 @@ class DarkSkyClient:
         return DSFHourly(self.raw_data['hourly'])
 
     def __repr__(self):
-        return "DarkSkyClient('{}', '{}', '{}')".format(self.api_key, self.latitude, self.longitude)
+        return "DarkSkyClient('{}', '{}', '{}', '{}')".format(self.api_key, self.latitude, self.longitude, self.units)
 
     def __str__(self):
         return "Latitude: {} - Longitude: {} - Units: {} - Timezone: {}".format(self.latitude, self.longitude, self.units, self.timezone)

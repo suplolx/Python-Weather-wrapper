@@ -36,10 +36,10 @@ class DSFMBase:
             dict -- graph-friendly dict when graph set to True 
         """
         if graph:
-            return dict(x=[timestamp(i['time'], date_fmt) for i in self.data],
-                        y=[i[datapoint] for i in self.data])
+            return dict(x=[timestamp(i.get('time', None), date_fmt) for i in self.data],
+                        y=[i.get(datapoint, None) for i in self.data])
         else:
-            return [(timestamp(i['time'], date_fmt), i[datapoint]) for i in self.data]
+            return [(timestamp(i.get('time', None), date_fmt), i.get(datapoint, None)) for i in self.data]
     
     def data_single(self, datapoint:str, to_percent=False, to_datetime=False):
         """Generates a list of single datapoint values.
@@ -47,33 +47,39 @@ class DSFMBase:
         Arguments:
             datapoint {str} -- The forecast datapoint you want the values of (example: windSpeed)
         
+        Keyword Arguments:
+            to_percent {bool} -- Boolean which will convert datapoint values to precentages
+            to_datetime {bool} -- Boolean which will convert datapoint values to datetime strings
+        
         Returns:
             list -- A list containing single datapoint values
         """
         if to_percent:
-            return [i[datapoint] * 100 if datapoint in i else None for i in self.data]
+            return [int(i.get(datapoint, None) * 100) if datapoint in i else None for i in self.data]
         elif to_datetime:
-            return [timestamp(i[datapoint], "%d-%m-%Y %H:%M") if datapoint in i else None for i in self.data]
+            return [timestamp(i.get(datapoint, None), "%d-%m-%Y %H:%M") if datapoint in i else None for i in self.data]
         else:
-            return [i[datapoint] if datapoint in i else None for i in self.data]
+            return [i.get(datapoint, None) if datapoint in i else None for i in self.data]
 
-    def data_combined(self, datalist:list=None):
+    def data_combined(self, datalist:list=None, date_fmt="%d-%m-%Y %H:%M"):
         """Generates a custom dict of datapoint values for each day/hour.
 
         Keyword Arguments:
             datalist {list} -- A list of datapoints you want the values of (default: {None})
+            date_fmt {str} -- Datetime format (default: {%d-%m-%Y %H:%M})
         
         Returns:
             dict -- A dict of datapoints and their corresponding values. If no list is provided, all datapoints will  be used.
         """
         if datalist:
-            return {datapoint: [i[datapoint] for i in self.data] for datapoint in datalist}
+            return {datapoint: [timestamp(i.get(datapoint, None), date_fmt) if datapoint.lower().find("time") >= 0 
+                    else i.get(datapoint, None) for i in self.data] for datapoint in datalist}
         else:
             datalist = [datakey for datakey in self.data[0].keys()]
             return {datapoint: [i.get(datapoint, None) for i in self.data] for datapoint in datalist}
 
     def datetimes(self, date_fmt:str="%d-%m-%Y %H:%M"):
-        """Generates a list of datetime strings of all the hours/days
+        """Generates a list of datetime strings of all the hours/days.
         
         Keyword Arguments:
             date_fmt {str} -- The datetime format (default: {"%d-%m-%Y %H:%M"})
@@ -81,83 +87,111 @@ class DSFMBase:
         Returns:
             list -- A list of datetime strings of all the hours/days
         """
-        return [timestamp(i['time'], date_fmt) for i in self.data]
+        return [timestamp(i.get('time', None), date_fmt) for i in self.data]
 
     @property
     def time(self):
-        """list: a list of datetime strings"""
+        """list: a list of datetime strings."""
         return self.data_single('time', to_datetime=True)
     
     @property
     def summary(self):
-        """list: a list of weather summary's"""
+        """list: a list of weather summary's."""
         return self.data_single('summary')
 
     @property
     def icon(self):
-        """list: a list of weather icons"""
+        """list: a list of weather icons."""
         return self.data_single('icon')
 
     @property
     def precipIntensity(self):
+        """list: a list of precipitation amount."""
         return self.data_single('precipIntensity')
     
     @property
     def precipProbability(self):
+        """list: a list precipitation probability in percentages."""
         return self.data_single('precipProbability', to_percent=True)
 
     @property
     def precipType(self):
+        """list: a list of the type of precipitation."""
         return self.data_single('precipType')
 
     @property
     def dewPoint(self):
+        """list: a list of dewpoints."""
         return self.data_single('dewPoint')
 
     @property
     def humidity(self):
+        """list: a list of humidity in percentages."""
         return self.data_single('humidity', to_percent=True)
     
     @property
     def pressure(self):
+        """list: a list of the air pressure."""
         return self.data_single('pressure')
 
     @property
     def windSpeed(self):
+        """list: a list of wind speeds"""
         return self.data_single('windSpeed')
 
     @property
     def windGust(self):
+        """list: a list of wind gusts"""
         return self.data_single('windGust')
     
     @property
     def windBearing(self):
+        """list: a list of wind bearings."""
         return self.data_single('windBearing')
 
     @property
     def cloudCover(self):
+        """list: a list of cloud coverage in percentage."""
         return self.data_single('cloudCover', to_percent=True)
 
     @property
     def uvIndex(self):
+        """list: a list of uv indexes."""
         return self.data_single('uvIndex')
 
     @property
     def visibility(self):
+        """list: a list of distance of visibility."""
         return self.data_single('visibility')
         
     @property
     def ozone(self):
+        """list: a list of ozone levels."""
         return self.data_single('ozone')
     
 
 class DSFCurrent:
 
     def __init__(self, data:dict):
+        """Constructor method for Current class.
+
+        Sets attributes automatically according to data["currently"].
+         
+        Arguments:
+            data {dict} -- A dict containing the daily or hourly data from the DarkSkyAPI.
+        """
         for k, v in data.items():
             setattr(self, k, v)
 
     def weekday(self, short:bool=False):
+        """Gets the week day name for today
+        
+        Keyword Arguments:
+            short {bool} -- Boolean to set days of the week to short or full (default: {False})
+        
+        Returns:
+            str -- Week day name
+        """
         if short:
             return timestamp(self.time, "%a")
         else:
@@ -167,86 +201,128 @@ class DSFCurrent:
 class DSFDaily(DSFMBase):
 
     def __init__(self, data:dict):
+        """Constructor method for Daily class.
+        
+        Sets attributes automatically according to data["daily"]. Inherits base attributes, methods and 
+        properties from DSFMBase class.
+
+        Arguments:
+            data {dict} -- A dict containing the daily data from the DarkSkyAPI.
+        """
         super().__init__(data)
         for index, item in enumerate(self.data):
             setattr(self, 'day_' + str(index), item)
     
     @property
     def temperatureHigh(self):
+        """list: a list of daily max temperatures."""
         return self.data_single('temperatureHigh')
 
     @property
     def temperatureHighTime(self):
+        """list: a list of daily max temperature times."""
         return self.data_single('temperatureHighTime', to_datetime=True)
     
     @property
     def apparentTemperatureHigh(self):
+        """list: a list of daily apparent max temperatures."""
         return self.data_single('apparentTemperatureHigh')
 
     @property
     def apparentTemperatureHighTime(self):
+        """list: a list of daily apparent max temperature times."""
         return self.data_single('apparentTemperatureHighTime', to_datetime=True)
 
     @property
     def temperatureLow(self):
+        """list: a list of daily min temperatures."""
         return self.data_single('temperatureLow')
 
     @property
     def temperatureLowTime(self):
+        """list: a list of daily min temperature times."""
         return self.data_single('temperatureLowTime', to_datetime=True)
 
     @property
     def apparentTemperatureLow(self):
+        """list: a list of daily min apparent temperatures."""
         return self.data_single('apparentTemperatureLow')
 
     @property
     def apparentTemperatureLowTime(self):
+        """list: a list of daily min apparent temperature times."""
         return self.data_single('apparentTemperatureLowTime', to_datetime=True)
 
     @property
     def sunriseTime(self):
+        """list: a list of daily sunrise times."""
         return self.data_single('sunriseTime')
     
     @property
     def sunsetTime(self):
+        """list: a list of daily sunset times."""
         return self.data_single('sunsetTime')
 
     @property
     def precipIntensityMax(self):
+        """list: a list of daily max rain intensity."""
         return self.data_single('precipIntensityMax')
 
     @property
     def precipIntensityMaxTime(self):
+        """list: a list of daily max rain intensity times."""
         return self.data_single('precipIntensityMaxTime', to_datetime=True)
 
     @property
     def moonPhase(self):
+        """list: a list of daily moonphases."""
         return self.data_single('moonPhase')
 
     @property
     def windGustTime(self):
+        """list: a list of daily wind gust times."""
         return self.data_single('windGustTime', to_datetime=True)
 
     @property
     def uvIndexTime(self):
+        """list: a list of daily uv index times."""
         return self.data_single('uvIndexTime', to_datetime=True)
     
 
 class DSFHourly(DSFMBase):
 
     def __init__(self, data:dict):
+        """Constructor method for Hourly class.
+        
+        Sets attributes automatically according to data["hourly"]. Inherits base attributes, methods and 
+        properties from DSFMBase class.
+
+        Arguments:
+            data {dict} -- A dict containing the hourly data from the DarkSkyAPI.
+        """
         super().__init__(data)
         for index, item in enumerate(self.data):
             setattr(self, 'hour_' + str(index), item)
     
     @property
     def temperature(self):
+        """list: a list of hourly temperatures."""
         return self.data_single('temperature')
 
     @property
     def apparentTemperature(self):
+        """list: a list of hourly apparent temperatures."""
         return self.data_single('apparentTemperature')
 
 
 def timestamp(dt:int, fmt:str):
+    """Helper function to convert timestamp to string
+    
+    Arguments:
+        dt {int} -- timestamp
+        fmt {str} -- datetime format
+    
+    Returns:
+        str -- datetime string
+    """
     return datetime.fromtimestamp(int(dt)).strftime(fmt)

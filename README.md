@@ -22,9 +22,9 @@ The client instance already holds the raw weather response and can be accessed b
 ```python
 client.raw_data
 ```
-Additionally, it also holds the timezone.
+Additionally it also keeps track of the remaining api calls for the current day.
 ```python
-client.timezone
+client.API_calls_remaining
 ```
 ## Current instance
 To create the current instance, simply call the get_current method on client.
@@ -61,12 +61,17 @@ daily.day_0['temperatureHigh']
 # Daily data list
 daily.data[0]['temperatureHigh']
 ```
+Both instances also have every date point set as a property. These properties hold a list of single datapoint values.
+```python
+daily.temperatureHigh
+```
+
 Alternatively, there are several methods you can use to get data collections of one or more datapoints. These methods work on both the daily and hourly instance. The methods currently available are:
 
-* data_pair(datapoint, date_fmt, graph): Will return a list of value pair tuples containing firstly the datetime and secondly the value of the datapoint. This method accepts three arguments. The first argument is the datapoint (required). The second argument is the date_fmt parameter and will set the format of the datetime value (default - "%d-%m-%Y %H:%M"). The third argument is the graph argument, if set to True it wil return a graph-friendly dict of the datetime and values of the datapoint (default - False).
-* data_single(datapoint): Will return a list of single data values. This method accepts one method which is the datapoint.
-* data_combined(datalist): Will return a dict containing lists of datapoint values for each day/hour. This method accepts one argument which is the list of datapoints you want to retrieve. If you don't provide an argument it will return all datapoints.
-* datetimes(date_fmt): Will return a list containing all the datetimes of the days/hours. This method accepts one argument which is the dateformat (default - "%d-%m-%Y %H:%M")
+* data_pair: Will return a list of value pair tuples containing firstly the datetime and secondly the value of the datapoint. This method accepts three arguments. The first argument is the datapoint (required). The second argument is the date_fmt parameter and will set the format of the datetime value (default - "%d-%m-%Y %H:%M"). The third argument is the graph argument, if set to True it wil return a graph-friendly dict of the datetime and values of the datapoint (default - False).
+* data_single: Will return a list of single datapoint values. This method accepts three arguments. The first argument is the datapoint you wan the values of. The second argument is a boolean that will convert the datapoint to percentages if set to True (default: False). The third argument is a boolean that will convert the datapoint to a datetime string if set to True (default: False).
+* data_combined: Will return a dict containing lists of datapoint values for each day/hour. This method accepts two arguments. The first is the list of datapoints. The second is the date_fmt incase the datapoint is time. If you don't provide a list of datapoints it will return all datapoints. 
+* datetimes: Will return a list containing all the datetimes of the days/hours. This method accepts one argument which is the dateformat (default - "%d-%m-%Y %H:%M")
 ### Data pair method
 ```python
 # Data pair default date format and no graph
@@ -80,12 +85,19 @@ daily.data_pair('temperatureHigh', graph=True)
 ```
 ### Data single method
 ```python
+# Datapoint argument.
 daily.data_single('temperatureHigh')
+
+# Datapoint argument and to_percent argument set to True.
+daily.data_single('precipProbability', to_percent=True)
+
+# Datapoint argument and to_datetime argument set to True.
+daily.data_single('precipIntensityMaxTime', to_datetime=True)
 ```
 ### Data combined method
 ```python
 # Specified list of datapoints
-daily.data_combined(['temperatureHigh', 'temperatureLow'])
+daily.data_combined(['temperatureHigh', 'temperatureLow'], date_fmt="%H:%M")
 
 # All data points
 daily.data_combined()
