@@ -30,11 +30,14 @@ class DarkSkyClient:
     def get_daily(self):
         return DSFDaily(self.raw_data['daily'])
 
-    def get_hourly(self):
-        return DSFHourly(self.raw_data['hourly'])
+    def get_hourly(self, hours:int=48):
+        return DSFHourly(self.raw_data['hourly'], hours)
 
     def __repr__(self):
         return "DarkSkyClient('{}', '{}', '{}', '{}')".format(self.api_key, self.latitude, self.longitude, self.units)
 
     def __str__(self):
-        return "Latitude: {} - Longitude: {} - Units: {} - Timezone: {}".format(self.latitude, self.longitude, self.units, self.timezone)
+        return "Latitude: {} - Longitude: {} - Units: {} - Timezone: {}\nRemaining calls: {}".format(
+                                                                                         self.latitude, self.longitude,
+                                                                                         self.units, self.timezone,
+                                                                                         self.API_calls_remaining)

@@ -21,7 +21,7 @@ class DSFMBase:
         self.general_summary = data['summary']
         self.general_icon = data['icon']
     
-    def data_pair(self, datapoint:str, date_fmt:str='%d-%m-%Y %H:%M', graph:bool=False):
+    def data_pair(self, datapoint:str, t:int=None, date_fmt:str='%d-%m-%Y %H:%M', graph:bool=False):
         """Generates a list of value pairs containing datetimes and datapoint values.
 
         Arguments:
@@ -36,10 +36,10 @@ class DSFMBase:
             dict -- graph-friendly dict when graph set to True 
         """
         if graph:
-            return dict(x=[timestamp(i.get('time', None), date_fmt) for i in self.data],
-                        y=[i.get(datapoint, None) for i in self.data])
+            return dict(x=[timestamp(self.data[tr].get('time', None), date_fmt) for tr in time_range],
+                        y=[self.data[tr].get(datapoint, None) for tr in time_range])
         else:
-            return [(timestamp(i.get('time', None), date_fmt), i.get(datapoint, None)) for i in self.data]
+            return [(timestamp(self.data[tr].get('time', None), date_fmt), self.data[tr].get(datapoint, None)) for tr in time_range]
     
     def data_single(self, datapoint:str, to_percent=False, to_datetime=False):
         """Generates a list of single datapoint values.
@@ -69,7 +69,8 @@ class DSFMBase:
             date_fmt {str} -- Datetime format (default: {%d-%m-%Y %H:%M})
         
         Returns:
-            dict -- A dict of datapoints and their corresponding values. If no list is provided, all datapoints will  be used.
+            dict -- A dict of datapoints and their corresponding values. If no list is provided, all datapoints will
+            be used.
         """
         if datalist:
             return {datapoint: [timestamp(i.get(datapoint, None), date_fmt) if datapoint.lower().find("time") >= 0 
@@ -168,6 +169,9 @@ class DSFMBase:
     def ozone(self):
         """list: a list of ozone levels."""
         return self.data_single('ozone')
+
+    def __str__(self):
+        return self.general_summary
     
 
 class DSFCurrent:
@@ -196,6 +200,10 @@ class DSFCurrent:
             return timestamp(self.time, "%a")
         else:
             return timestamp(self.time, "%A")
+
+    def __str__(self):
+        return f"Temperature: {self.temperature}\nSummary: {self.summary}\nPrecipitation probability: " \
+                f"{int(self.precipProbability*100)}\nDay: {self.weekday()}"
 
 
 class DSFDaily(DSFMBase):
@@ -291,7 +299,7 @@ class DSFDaily(DSFMBase):
 
 class DSFHourly(DSFMBase):
 
-    def __init__(self, data:dict):
+    def __init__(self, data:dict, hours:int=48):
         """Constructor method for Hourly class.
         
         Sets attributes automatically according to data["hourly"]. Inherits base attributes, methods and 
@@ -300,9 +308,11 @@ class DSFHourly(DSFMBase):
         Arguments:
             data {dict} -- A dict containing the hourly data from the DarkSkyAPI.
         """
+        self.hours = hours
         super().__init__(data)
-        for index, item in enumerate(self.data):
-            setattr(self, 'hour_' + str(index), item)
+        for hour in range(0, hours+1):
+            for item in self.data:
+                setattr(self, 'hour_' + str(hour), item)
     
     @property
     def temperature(self):
