@@ -7,3 +7,4 @@ secret.py
 .vs
 .ipynb_checkpoints
 weer.py
+tests.py

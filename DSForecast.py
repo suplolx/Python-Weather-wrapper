@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from DS_logger import logger
+
 
 class DSFMBase:
 
@@ -20,12 +22,14 @@ class DSFMBase:
         self.data = data['data']
         self.general_summary = data['summary']
         self.general_icon = data['icon']
+        logger.info(f"{repr(self)} created")
     
     def data_pair(self, datapoint:str, t:int=None, date_fmt:str='%d-%m-%Y %H:%M', graph:bool=False):
         """Generates a list of value pairs containing datetimes and datapoint values.
 
         Arguments:
             datapoint {str} -- The forecast datapoint you want the values from (example: windSpeed)
+            t {int} -- The amount of days/hours the user wants to return
         
         Keyword Arguments:
             date_fmt {str} -- The datetime format (default: {'%d-%m-%Y %H:%M'})
@@ -35,17 +39,19 @@ class DSFMBase:
             list -- list of tuple value pairs
             dict -- graph-friendly dict when graph set to True 
         """
+        time_range = get_time_range(self, t)
         if graph:
             return dict(x=[timestamp(self.data[tr].get('time', None), date_fmt) for tr in time_range],
                         y=[self.data[tr].get(datapoint, None) for tr in time_range])
         else:
             return [(timestamp(self.data[tr].get('time', None), date_fmt), self.data[tr].get(datapoint, None)) for tr in time_range]
     
-    def data_single(self, datapoint:str, to_percent=False, to_datetime=False):
+    def data_single(self, datapoint:str, t:int=None, to_percent=False, to_datetime=False):
         """Generates a list of single datapoint values.
         
         Arguments:
             datapoint {str} -- The forecast datapoint you want the values of (example: windSpeed)
+            t {int} -- The amount of days/hours the user wants to return
         
         Keyword Arguments:
             to_percent {bool} -- Boolean which will convert datapoint values to precentages
@@ -54,15 +60,19 @@ class DSFMBase:
         Returns:
             list -- A list containing single datapoint values
         """
+        time_range = get_time_range(self, t)
         if to_percent:
-            return [int(i.get(datapoint, None) * 100) if datapoint in i else None for i in self.data]
+            return [int(self.data[tr].get(datapoint, None) * 100) if datapoint in self.data[tr] else None for tr in time_range]
         elif to_datetime:
-            return [timestamp(i.get(datapoint, None), "%d-%m-%Y %H:%M") if datapoint in i else None for i in self.data]
+            return [timestamp(self.data[tr].get(datapoint, None), "%d-%m-%Y %H:%M") if datapoint in self.data[tr] else None for tr in time_range]
         else:
-            return [i.get(datapoint, None) if datapoint in i else None for i in self.data]
+            return [self.data[tr].get(datapoint, None) if datapoint in self.data[tr] else None for tr in time_range]
 
-    def data_combined(self, datalist:list=None, date_fmt="%d-%m-%Y %H:%M"):
+    def data_combined(self, t:int=None, datalist:list=None, date_fmt="%d-%m-%Y %H:%M"):
         """Generates a custom dict of datapoint values for each day/hour.
+
+        Arguments:
+            t {int} -- The amount of days/hours the user wants to return
 
         Keyword Arguments:
             datalist {list} -- A list of datapoints you want the values of (default: {None})
@@ -72,23 +82,31 @@ class DSFMBase:
             dict -- A dict of datapoints and their corresponding values. If no list is provided, all datapoints will
             be used.
         """
+        time_range = get_time_range(self, t)
         if datalist:
-            return {datapoint: [timestamp(i.get(datapoint, None), date_fmt) if datapoint.lower().find("time") >= 0 
-                    else i.get(datapoint, None) for i in self.data] for datapoint in datalist}
+            return {datapoint: [timestamp(self.data[tr].get(datapoint, None), date_fmt) if datapoint.lower().find("time") >= 0 
+                    else self.data[tr].get(datapoint, None) for tr in time_range] for datapoint in datalist}
         else:
             datalist = [datakey for datakey in self.data[0].keys()]
-            return {datapoint: [i.get(datapoint, None) for i in self.data] for datapoint in datalist}
+            return {datapoint: [self.data[tr].get(datapoint, None) for tr in time_range] for datapoint in datalist}
 
-    def datetimes(self, date_fmt:str="%d-%m-%Y %H:%M"):
+    def datetimes(self, t:int=None, date_fmt:str="%d-%m-%Y %H:%M"):
         """Generates a list of datetime strings of all the hours/days.
         
+        Arguments:
+            t {int} -- The amount of days/hours the user wants to return
+
         Keyword Arguments:
             date_fmt {str} -- The datetime format (default: {"%d-%m-%Y %H:%M"})
         
         Returns:
             list -- A list of datetime strings of all the hours/days
         """
-        return [timestamp(i.get('time', None), date_fmt) for i in self.data]
+        time_range = get_time_range(self, t)
+        return [timestamp(self.data[tr].get('time', None), date_fmt) for tr in time_range]
+
+    def is_raining(self, n):
+        return self.data[n]["precipProbability"] > 0
 
     @property
     def time(self):
@@ -186,6 +204,7 @@ class DSFCurrent:
         """
         for k, v in data.items():
             setattr(self, k, v)
+        logger.info(f"{repr(self)} created")
 
     def weekday(self, short:bool=False):
         """Gets the week day name for today
@@ -200,6 +219,9 @@ class DSFCurrent:
             return timestamp(self.time, "%a")
         else:
             return timestamp(self.time, "%A")
+
+    def is_raining(self):
+        return self.precipProbability > 0
 
     def __str__(self):
         return f"Temperature: {self.temperature}\nSummary: {self.summary}\nPrecipitation probability: " \
@@ -308,11 +330,9 @@ class DSFHourly(DSFMBase):
         Arguments:
             data {dict} -- A dict containing the hourly data from the DarkSkyAPI.
         """
-        self.hours = hours
         super().__init__(data)
-        for hour in range(0, hours+1):
-            for item in self.data:
-                setattr(self, 'hour_' + str(hour), item)
+        for index, item in enumerate(self.data):
+            setattr(self, 'hour_' + str(index), item)
     
     @property
     def temperature(self):
@@ -336,3 +356,25 @@ def timestamp(dt:int, fmt:str):
         str -- datetime string
     """
     return datetime.fromtimestamp(int(dt)).strftime(fmt)
+
+
+def get_time_range(obj, t):
+    """Helper function to choose time range based on instance of a class.
+    
+    Arguments:
+        t {int} -- Amount of hours/days the user wants to return
+    
+    Returns:
+        range -- range generator
+    """
+    if not t:
+        if isinstance(obj, DSFDaily):
+            time_range = range(0, 8)
+            logger.info(f"{time_range} created for {repr(obj)}")
+        else:
+            time_range = range(0, 49)
+            logger.info(f"{time_range} created for {repr(obj)}")
+    else:
+        time_range = range(0, t)
+        logger.info(f"{time_range} created for {repr(obj)}")
+    return time_range

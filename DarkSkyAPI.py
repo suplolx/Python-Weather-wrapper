@@ -1,5 +1,7 @@
 import requests
+
 from DSForecast import DSFCurrent, DSFDaily, DSFHourly
+from DS_logger import logger
 
 
 class DarkSkyClient:
@@ -22,6 +24,7 @@ class DarkSkyClient:
     def _get_response(self):
         raw_response = requests.get(self._url_builder())
         self.API_calls_remaining -= int(raw_response.headers['X-Forecast-API-Calls'])
+        logger.info(f"API calls remaining: {self.API_calls_remaining}")
         return raw_response.json()
 
     def get_current(self):
@@ -30,8 +33,8 @@ class DarkSkyClient:
     def get_daily(self):
         return DSFDaily(self.raw_data['daily'])
 
-    def get_hourly(self, hours:int=48):
-        return DSFHourly(self.raw_data['hourly'], hours)
+    def get_hourly(self):
+        return DSFHourly(self.raw_data['hourly'])
 
     def __repr__(self):
         return "DarkSkyClient('{}', '{}', '{}', '{}')".format(self.api_key, self.latitude, self.longitude, self.units)
