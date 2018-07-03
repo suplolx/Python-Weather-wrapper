@@ -1,7 +1,7 @@
 import requests
 
-from DSForecast import DSFCurrent, DSFDaily, DSFHourly
-from DS_logger import logger
+from DarkSkyAPI.DSForecast import DSFCurrent, DSFDaily, DSFHourly
+from DarkSkyAPI.DS_logger import logger
 
 
 class DarkSkyClient:

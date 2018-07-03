@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from DS_logger import logger
+from DarkSkyAPI.DS_logger import logger
 
 
 class DSFMBase:
@@ -44,7 +44,8 @@ class DSFMBase:
             return dict(x=[timestamp(self.data[tr].get('time', None), date_fmt) for tr in time_range],
                         y=[self.data[tr].get(datapoint, None) for tr in time_range])
         else:
-            return [(timestamp(self.data[tr].get('time', None), date_fmt), self.data[tr].get(datapoint, None)) for tr in time_range]
+            return [(timestamp(self.data[tr].get('time', None), date_fmt), self.data[tr].get(datapoint, None))
+                    for tr in time_range]
     
     def data_single(self, datapoint:str, t:int=None, to_percent=False, to_datetime=False):
         """Generates a list of single datapoint values.
@@ -62,13 +63,15 @@ class DSFMBase:
         """
         time_range = get_time_range(self, t)
         if to_percent:
-            return [int(self.data[tr].get(datapoint, None) * 100) if datapoint in self.data[tr] else None for tr in time_range]
+            return [int(self.data[tr].get(datapoint, None) * 100) if datapoint in self.data[tr] else None
+                    for tr in time_range]
         elif to_datetime:
-            return [timestamp(self.data[tr].get(datapoint, None), "%d-%m-%Y %H:%M") if datapoint in self.data[tr] else None for tr in time_range]
+            return [timestamp(self.data[tr].get(datapoint, None), "%d-%m-%Y %H:%M") if datapoint in self.data[tr]
+                    else None for tr in time_range]
         else:
             return [self.data[tr].get(datapoint, None) if datapoint in self.data[tr] else None for tr in time_range]
 
-    def data_combined(self, t:int=None, datalist:list=None, date_fmt="%d-%m-%Y %H:%M"):
+    def data_combined(self, datalist:list=None, t:int=None, date_fmt="%d-%m-%Y %H:%M"):
         """Generates a custom dict of datapoint values for each day/hour.
 
         Arguments:
@@ -84,7 +87,8 @@ class DSFMBase:
         """
         time_range = get_time_range(self, t)
         if datalist:
-            return {datapoint: [timestamp(self.data[tr].get(datapoint, None), date_fmt) if datapoint.lower().find("time") >= 0 
+            return {datapoint: [timestamp(self.data[tr].get(datapoint, None), date_fmt)
+                                if datapoint.lower().find("time") >= 0
                     else self.data[tr].get(datapoint, None) for tr in time_range] for datapoint in datalist}
         else:
             datalist = [datakey for datakey in self.data[0].keys()]
@@ -206,7 +210,7 @@ class DSFCurrent:
             setattr(self, k, v)
         logger.info(f"{repr(self)} created")
 
-    def weekday(self, short:bool=False):
+    def _weekday(self, short:bool=False):
         """Gets the week day name for today
         
         Keyword Arguments:
@@ -220,12 +224,24 @@ class DSFCurrent:
         else:
             return timestamp(self.time, "%A")
 
-    def is_raining(self):
+    def _is_raining(self):
         return self.precipProbability > 0
+    
+    @property
+    def weekday(self):
+        return self._weekday()
+
+    @property
+    def weekday_short(self):
+        return self._weekday(short=True)
+
+    @property
+    def is_raining(self):
+        return self._is_raining()
 
     def __str__(self):
         return f"Temperature: {self.temperature}\nSummary: {self.summary}\nPrecipitation probability: " \
-                f"{int(self.precipProbability*100)}\nDay: {self.weekday()}"
+                f"{int(self.precipProbability*100)}\nDay: {self._weekday()}"
 
 
 class DSFDaily(DSFMBase):
@@ -321,7 +337,7 @@ class DSFDaily(DSFMBase):
 
 class DSFHourly(DSFMBase):
 
-    def __init__(self, data:dict, hours:int=48):
+    def __init__(self, data:dict):
         """Constructor method for Hourly class.
         
         Sets attributes automatically according to data["hourly"]. Inherits base attributes, methods and 
