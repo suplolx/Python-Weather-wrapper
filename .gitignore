@@ -2,6 +2,7 @@ __pycache__
 .idea
 hourly_graph.py
 main.pyw
+main.py
 secret.py
 .vscode
 .vs

@@ -2,6 +2,7 @@ from datetime import datetime
 
 from DarkSkyAPI.DS_logger import logger
 
+# TODO:: Update docstrings
 
 class DSFMBase:
 
@@ -109,9 +110,6 @@ class DSFMBase:
         """
         time_range = get_time_range(self, self.time_a)
         return [timestamp(self.data[tr].get('time', None), date_fmt) for tr in time_range]
-
-    def is_raining(self, n):
-        return self.data[n]["precipProbability"] > 0
 
     @property
     def time(self):
