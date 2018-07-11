@@ -5,7 +5,7 @@ from DarkSkyAPI.DS_logger import logger
 
 class DSFMBase:
 
-    def __init__(self, data:dict):
+    def __init__(self, data:dict, time_a:int=None):
         """Constructor method.
 
         Sets base attributes from data dict.
@@ -22,9 +22,10 @@ class DSFMBase:
         self.data = data['data']
         self.general_summary = data['summary']
         self.general_icon = data['icon']
+        self.time_a = time_a
         logger.info(f"{repr(self)} created")
     
-    def data_pair(self, datapoint:str, t:int=None, date_fmt:str='%d-%m-%Y %H:%M', graph:bool=False):
+    def data_pair(self, datapoint:str, date_fmt:str='%d-%m-%Y %H:%M', graph:bool=False):
         """Generates a list of value pairs containing datetimes and datapoint values.
 
         Arguments:
@@ -39,7 +40,7 @@ class DSFMBase:
             list -- list of tuple value pairs
             dict -- graph-friendly dict when graph set to True 
         """
-        time_range = get_time_range(self, t)
+        time_range = get_time_range(self, self.time_a)
         if graph:
             return dict(x=[timestamp(self.data[tr].get('time', None), date_fmt) for tr in time_range],
                         y=[self.data[tr].get(datapoint, None) for tr in time_range])
@@ -47,7 +48,7 @@ class DSFMBase:
             return [(timestamp(self.data[tr].get('time', None), date_fmt), self.data[tr].get(datapoint, None))
                     for tr in time_range]
     
-    def data_single(self, datapoint:str, t:int=None, to_percent=False, to_datetime=False):
+    def data_single(self, datapoint:str, to_percent=False, to_datetime=False):
         """Generates a list of single datapoint values.
         
         Arguments:
@@ -61,7 +62,7 @@ class DSFMBase:
         Returns:
             list -- A list containing single datapoint values
         """
-        time_range = get_time_range(self, t)
+        time_range = get_time_range(self, self.time_a)
         if to_percent:
             return [int(self.data[tr].get(datapoint, None) * 100) if datapoint in self.data[tr] else None
                     for tr in time_range]
@@ -71,7 +72,7 @@ class DSFMBase:
         else:
             return [self.data[tr].get(datapoint, None) if datapoint in self.data[tr] else None for tr in time_range]
 
-    def data_combined(self, datalist:list=None, t:int=None, date_fmt="%d-%m-%Y %H:%M"):
+    def data_combined(self, datalist:list=None, date_fmt="%d-%m-%Y %H:%M"):
         """Generates a custom dict of datapoint values for each day/hour.
 
         Arguments:
@@ -85,7 +86,7 @@ class DSFMBase:
             dict -- A dict of datapoints and their corresponding values. If no list is provided, all datapoints will
             be used.
         """
-        time_range = get_time_range(self, t)
+        time_range = get_time_range(self, self.time_a)
         if datalist:
             return {datapoint: [timestamp(self.data[tr].get(datapoint, None), date_fmt)
                                 if datapoint.lower().find("time") >= 0
@@ -94,7 +95,7 @@ class DSFMBase:
             datalist = [datakey for datakey in self.data[0].keys()]
             return {datapoint: [self.data[tr].get(datapoint, None) for tr in time_range] for datapoint in datalist}
 
-    def datetimes(self, t:int=None, date_fmt:str="%d-%m-%Y %H:%M"):
+    def datetimes(self, date_fmt:str="%d-%m-%Y %H:%M"):
         """Generates a list of datetime strings of all the hours/days.
         
         Arguments:
@@ -106,7 +107,7 @@ class DSFMBase:
         Returns:
             list -- A list of datetime strings of all the hours/days
         """
-        time_range = get_time_range(self, t)
+        time_range = get_time_range(self, self.time_a)
         return [timestamp(self.data[tr].get('time', None), date_fmt) for tr in time_range]
 
     def is_raining(self, n):
@@ -246,7 +247,7 @@ class DSFCurrent:
 
 class DSFDaily(DSFMBase):
 
-    def __init__(self, data:dict):
+    def __init__(self, data:dict, time_a:int):
         """Constructor method for Daily class.
         
         Sets attributes automatically according to data["daily"]. Inherits base attributes, methods and 
@@ -255,9 +256,9 @@ class DSFDaily(DSFMBase):
         Arguments:
             data {dict} -- A dict containing the daily data from the DarkSkyAPI.
         """
-        super().__init__(data)
-        for index, item in enumerate(self.data):
-            setattr(self, 'day_' + str(index), item)
+        super().__init__(data, time_a)
+        for i in range(0, time_a + 1):
+            setattr(self, 'day_' + str(i), data['data'][i])
     
     @property
     def temperatureHigh(self):
@@ -337,7 +338,7 @@ class DSFDaily(DSFMBase):
 
 class DSFHourly(DSFMBase):
 
-    def __init__(self, data:dict):
+    def __init__(self, data:dict, time_a:int):
         """Constructor method for Hourly class.
         
         Sets attributes automatically according to data["hourly"]. Inherits base attributes, methods and 
@@ -346,9 +347,9 @@ class DSFHourly(DSFMBase):
         Arguments:
             data {dict} -- A dict containing the hourly data from the DarkSkyAPI.
         """
-        super().__init__(data)
-        for index, item in enumerate(self.data):
-            setattr(self, 'hour_' + str(index), item)
+        super().__init__(data, time_a)
+        for i in range(0, time_a + 1):
+            setattr(self, 'hour_' + str(i), data['data'][i])
     
     @property
     def temperature(self):

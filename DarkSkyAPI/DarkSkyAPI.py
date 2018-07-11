@@ -32,12 +32,12 @@ class DarkSkyClient:
         return DSFCurrent(self.raw_data['currently'])
 
     # TODO: implement option for setting amount of days
-    def get_daily(self):
-        return DSFDaily(self.raw_data['daily'])
+    def get_daily(self, days:int=7):
+        return DSFDaily(self.raw_data['daily'], days)
 
     # TODO: implement option for setting amount of hours
-    def get_hourly(self):
-        return DSFHourly(self.raw_data['hourly'])
+    def get_hourly(self, hours:int=47):
+        return DSFHourly(self.raw_data['hourly'], hours)
 
     @property
     def location(self):
@@ -79,6 +79,7 @@ class BingGeoCode:
 
     def __init__(self, api_key, location, country:str=None):
         self.api_key = api_key
+        self._data = None
         self._country = country
         self._location = location
 
@@ -90,12 +91,25 @@ class BingGeoCode:
             return self.base_url + "locality={}&key={}".format(self.location, self.api_key)
 
     def _get_response(self):
-        raw_response = requests.get(self._url_builder())
-        return raw_response.json()
+        json_response = requests.get(self._url_builder()).json()
+        dataset = json_response['resourceSets'][0]['resources']
+        return dataset
+
+    @property
+    def has_multiple_results(self):
+        return len(self.data) > 1
+
+    @property
+    def data(self):
+        return self._get_response()
 
     @property
     def country(self):
         return self._country
+
+    @country.setter
+    def country(self, val):
+        self._country = val
 
     @property
     def location(self):
@@ -107,22 +121,22 @@ class BingGeoCode:
 
     @property
     def coords(self):
-        data = self._get_response()
-        logger.info(f"Setting coords for {data['resourceSets'][0]['resources'][0]['name']}")
-        if data['resourceSets'][0]['estimatedTotal'] > 1 and not self.country:
+        logger.info(f"Setting coords for {self.data[0]['name']}")
+        if self.has_multiple_results and not self.country:
             logger.warning(f"There are more than 1 locations called: {self.location}. Specify a country name as such:\n" 
                            f"GeoCode({self.api_key}, \"Amsterdam\", country=\"NL\")\n"
-                           f"Location now set for {data['resourceSets'][0]['resources'][0]['name']}")
-            logger.debug([name['name'] for name in data['resourceSets'][0]['resources']])
-        if 'point' in data['resourceSets'][0]['resources'][0]:
-            location = data['resourceSets'][0]['resources'][0]['point']['coordinates']
+                           f"Location now set for {self.data[0]['name']}")
+            logger.debug([name['name'] for name in self.data])
+        if 'point' in self.data[0]:
+            location = self.data[0]['point']['coordinates']
             coords = (location[0], location[1])
             return coords
         else:
             return None
 
     def __repr__(self):
-        return "GeoCode({}, {})".format(self.api_key, self.location)
+        return "BingGeoCode({}, {})".format(self.api_key, self.location)
 
     def __str__(self):
-        return self.coords
+        return f"Matching results: {len(self.data)}\n" \
+               f"{[[l['address']['countryRegion'], l['address']['adminDistrict']] for l in self.data]}"
