@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="darkskyapi-py",
-    version="1.0.0",
+    version="1.1.0",
     author="Hans Beijk",
     author_email="hans.beijk1992@gmail.com",
     description="A simple Python API wrapper for the DarkSky weather API",

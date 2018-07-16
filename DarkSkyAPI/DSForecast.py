@@ -140,6 +140,11 @@ class DSFMBase:
     def precipType(self):
         """list: a list of the type of precipitation."""
         return self.data_single('precipType')
+    
+    @property
+    def precipIntensityError(self):
+        """list: a list of the standard deviation of the distribution of precipIntensity."""
+        return self.data_single('precipIntensityError')
 
     @property
     def dewPoint(self):
@@ -359,6 +364,22 @@ class DSFHourly(DSFMBase):
         """list: a list of hourly apparent temperatures."""
         return self.data_single('apparentTemperature')
 
+
+class DSFMinutely(DSFMBase):
+
+    def __init__(self, data:dict, time_a:int):
+        """Constructor method for Minutely class.
+        
+        Sets attributes automatically according to data["minutely"]. Inherits base attributes, methods and 
+        properties from DSFMBase class.
+
+        Arguments:
+            data {dict} -- A dict containing the minutely data from the DarkSkyAPI.
+        """
+        super().__init__(data, time_a)
+        for i in range(0, time_a + 1):
+            setattr(self, 'minute_' + str(i), data['data'][i])
+        
 
 def timestamp(dt:int, fmt:str):
     """Helper function to convert timestamp to string
