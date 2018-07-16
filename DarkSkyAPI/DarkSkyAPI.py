@@ -10,12 +10,13 @@ class DarkSkyClient:
     base_url = "https://api.darksky.net/forecast/{}/{},{}?units={}"
     API_calls_remaining = 1000
 
-    def __init__(self, api_key:str, location:tuple, units:str="si"):
+    def __init__(self, api_key:str, location:tuple, units:str="si", exclude:list=None):
         self.api_key = api_key
         self._location = location
         self._latitude = None
         self._longitude = None
         self.units = units
+        self.exclude = exclude
         self.raw_data = self._get_response()
         self.timezone = self.raw_data['timezone']
 
@@ -38,6 +39,24 @@ class DarkSkyClient:
     def get_hourly(self, hours:int=47):
         return DSFHourly(self.raw_data['hourly'], hours)
 
+    @property
+    def daily(self):
+        if "daily" not in self.exclude:
+            return self.get_daily()
+        else:
+            return None
+
+    @property
+    def hourly(self):
+        if "hourly" not in self.exclude:
+            return self.get_hourly()
+        else:
+            return None
+
+    @property
+    def current(self):
+        return self.get_current()
+    
     @property
     def location(self):
         return self._location

@@ -9,3 +9,4 @@ secret.py
 .ipynb_checkpoints
 weer.py
 tests.py
+BingMapsAPI.py
